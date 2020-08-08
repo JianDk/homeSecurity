@@ -6,11 +6,12 @@ import glob
 import time
 
 class Stream:
-    def __init__(self, camName, rtsp, rtspSource):
+    def __init__(self, camName, rtsp, rtspSource, sec_betweenFrame):
         self.camName = camName
         self.rtsp = rtsp
         self.timeFormat = '%d-%m-%Y %H_%M_%S_%f'
         self.rtspSource = rtspSource
+        self.sec_betweenFrame = sec_betweenFrame
         
         #create output folder if it does not already exist
         self.imgFolder = Path(f'databin/{self.camName}/{rtspSource}/')
@@ -18,7 +19,7 @@ class Stream:
     
     def stream(self):
         self.cap = cv2.VideoCapture(self.rtsp)
-        print('stream capture object created')
+        print(f'stream capture object created for {self.camName}')
         self.streamOn = True
         while self.streamOn:
             ret, frame = self.cap.read()
@@ -28,6 +29,8 @@ class Stream:
                 #get file name with time stamp
                 imgPath = str(self.getFileName())
                 cv2.imwrite(imgPath, frame)
+            
+            time.sleep(self.sec_betweenFrame)
     
     def closeStream(self):
         self.streamOn = False
@@ -66,6 +69,7 @@ class motionDetection:
             sorted in modification time
         '''
         list_of_files = glob.glob(dirPath + '/*jpg')
+
         self.list_of_files = sorted(list_of_files,
                                     key = os.path.getmtime,
                                     reverse = True)
@@ -106,6 +110,7 @@ class motionDetection:
         #import images
         img1 = cv2.imread(img1Path)
         img2 = cv2.imread(img2Path)
+        
         #gray scale
         img1gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
         img2gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
@@ -115,6 +120,7 @@ class motionDetection:
         #Substract images from each other
         imgdiff = cv2.absdiff(img1gray, img2gray)
         diff_value = cv2.sumElems(imgdiff)
+        print('diff value ', str(diff_value[0]))
         if diff_value[0] <= threshold:
             return False
         else:
@@ -123,7 +129,17 @@ class motionDetection:
     def continousMotionDetect(self, threshold):
         self.continousMotionDetectSwitch = True
         while self.continousMotionDetectSwitch:
-            pass
+            for subPaths in self.subStreamDirPaths:
+                #Get the latest frame from each camera、s sub stream dir
+                status, img1, img2 = self.getLatestFrames(subPaths)
+                if status is False:
+                    continue
+            
+                #check for motion
+                motionStatus = self.motionDetectSingleCam(img1, img2, threshold)
+                if motionStatus:
+                    print('motion detected')
+    
         
         
         
