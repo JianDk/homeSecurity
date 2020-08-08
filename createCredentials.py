@@ -3,8 +3,8 @@ import json
 cam1 = dict()
 cam1['ip'] = '192.168.231.100'
 cam1['port'] = 9000
-cam1['rtsp_sub'] = 'rtsp://admin:PASSport1@192.168.231.100:554//h264Preview_01_sub'
-cam1['rtsp_main'] = 'rtsp://admin:PASSport1@192.168.231.100:554//h264Preview_01_main'
+cam1['rtsp_sub'] = 'rtsp://admin:password@192.168.231.100:554//h264Preview_01_sub'
+cam1['rtsp_main'] = 'rtsp://admin:password@192.168.231.100:554//h264Preview_01_main'
 
 camCred = dict()
 camCred['frontCam1'] = cam1
