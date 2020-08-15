@@ -22,7 +22,11 @@ class Stream:
         print(f'stream capture object created for {self.camName}')
         self.streamOn = True
         while self.streamOn:
-            ret, frame = self.cap.read()
+            try:
+                ret, frame = self.cap.read()
+            except:
+                continue
+            
             if ret is False:
                 continue
             else:
@@ -89,10 +93,8 @@ class motionDetection:
             return status, img1Path, img2Path
         
         img1Path = self.list_of_files[0] #The test frame
-        if len(self.list_of_files) >= 5:
-            img2Path = self.list_of_files[5]
-        elif len(self.list_of_files) <= 2:
-            img2Path = self.list_of_files[2]
+        if len(self.list_of_files) <= 2:
+            img2Path = self.list_of_files[1]
         else: #There is only one test image in the folder
             status = False
             img1Path = False
@@ -120,11 +122,11 @@ class motionDetection:
         #Substract images from each other
         imgdiff = cv2.absdiff(img1gray, img2gray)
         diff_value = cv2.sumElems(imgdiff)
-        print('diff value ', str(diff_value[0]))
+        print('diff value ', str(diff_value[0]), img1Path)
         if diff_value[0] <= threshold:
-            return False
+            return False, diff_value[0]
         else:
-            return True
+            return True, diff_value[0]
     
     def continousMotionDetect(self, threshold):
         self.continousMotionDetectSwitch = True
@@ -136,9 +138,39 @@ class motionDetection:
                     continue
             
                 #check for motion
-                motionStatus = self.motionDetectSingleCam(img1, img2, threshold)
+                motionStatus, diffValue = self.motionDetectSingleCam(img1, img2, threshold)
                 if motionStatus:
                     print('motion detected')
+
+class garbageCollect(motionDetection):
+    def __init__(self, daysOld):
+        #In this way we get the paths to the camera streams
+        super().__init__()
+        self.timeFormat = '%d-%m-%Y %H_%M_%S_%f'
+        self.removeGarbage(daysOld)
+    
+    def removeGarbage(self, daysOld):
+        daysOld = datetime.datetime.now() - datetime.timedelta(days = daysOld)
+        for path in self.subStreamDirPaths:
+            #get all file names in directory
+            self._listTimeSortedFiles(path)
+            for relativeFilePath in self.list_of_files:
+                dateTimeObj = self.getDateTimeFromFilePath(relativeFilePath)
+                if dateTimeObj < daysOld:
+                    os.remove(relativeFilePath)
+    
+    def getDateTimeFromFilePath(self, relativeFilePath):
+        '''
+            Given an absolute or relative file path, this method turns
+            the date time in file name into a datetime object
+        '''
+        fileName = os.path.basename(relativeFilePath)
+        #Remove the .jpg from filename
+        fileName = fileName.replace('.jpg','')
+        #Convert to datetime string into datetime object
+        dateTimeObj = datetime.datetime.strptime(fileName, self.timeFormat)
+        
+        return dateTimeObj       
     
         
         

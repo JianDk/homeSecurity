@@ -19,7 +19,6 @@ cam2StreamSub = Stream(camName = 'frontCam2',
 
 detectMotion = motionDetection()
 
-
 cam1StreamThread = Thread(target = cam1StreamSub.stream)
 cam2StreamThread = Thread(target = cam2StreamSub.stream)
 
