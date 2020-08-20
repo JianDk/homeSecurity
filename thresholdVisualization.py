@@ -7,9 +7,9 @@ import time
 with open('diffValue.txt','r') as file:
     data = json.load(file)
 
-diff_values = data[0]['frontCam2']['diff_value']
+diff_values = data[0]['frontCam1']['diff_value']
 diff_values = np.array(diff_values)
-files = np.array(data[0]['frontCam2']['files'])
+files = np.array(data[0]['frontCam1']['files'])
 
 #Use Otzu's method to find the optimal threshold. #Overall histogram
 testImg = cv2.imread(files[1])
@@ -31,14 +31,10 @@ class otzuThreshold:
         self.maxArr = np.max(arr)
         self.arr = arr
         
-        sigmaWeight = np.array([])
+        self.sigmaWeight = np.array([])
+        self.thresholdValue = list()
+        self.createP()
         for i in range(int(self.minArr + np.array(1)), int(self.maxArr)):
-            
-            #Split the data set into two groups
-            index = np.where(arr <= i)
-            self.grp1 = arr[index]
-            index = np.where(arr > i)
-            self.grp2 = arr[index]
             self.i = i
             #All variables stored in class. 
             self.computeP()
@@ -46,23 +42,28 @@ class otzuThreshold:
             self.computeMy()
             self.computeSigma()
             sigmaw = (self.q1 * self.sigma1) + (self.q2 * self.sigma2)
-            sigmaWeight = np.append(sigmaWeight, sigmaw)
-    
+            self.sigmaWeight = np.append(self.sigmaWeight, sigmaw)
+            self.thresholdValue.append(i)
+            print(i)
+            
     def computeQ(self):
         #Compute probability in class 1
         self.q1 = self.p1.sum()
         self.q2 = self.p2.sum()
     
-    def computeP(self):
+    def createP(self):
         #Create bins and count the observations into each bins
         bins = np.arange(0, self.maxArr+2, 1)
         count = np.histogram(self.arr, bins, density = False)
-        count = count[0]
-        bins = bins[0:-1]
-        self.bins1 = bins[0:self.i +1]
-        self.bins2 = bins[self.i +1 :]
-        self.p1 = count[0:self.i+1] / count.sum()
-        self.p2 = count[self.i +1 :] / count.sum()
+        self.Totalcount = count[0]
+        self.Totalbins = bins[0:-1]
+        
+    def computeP(self):
+        self.bins1 = self.Totalbins[0:self.i +1]
+        self.bins2 = self.Totalbins[self.i +1 :]
+        
+        self.p1 = self.Totalcount[0:self.i+1] / self.Totalcount.sum()
+        self.p2 = self.Totalcount[self.i +1 :] / self.Totalcount.sum()
             
     def computeMy(self):
         my1 = (self.p1 * self.bins1) / self.q1
@@ -81,3 +82,12 @@ class otzuThreshold:
         self.sigma2 = sigma2.sum()
         
 th = otzuThreshold(diff_values)
+cam1 = dict()
+cam1['threshold'] = th.thresholdValue
+cam1['weightedSigma'] = th.sigmaWeight
+
+#Save the data
+with open('sigmaw_cam1.txt', 'w') as file:
+    json.dump(cam1, file, indent = 4)
+
+print('complete')
