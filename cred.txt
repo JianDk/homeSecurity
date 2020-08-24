@@ -1,0 +1,14 @@
+{
+    "frontCam1": {
+        "ip": "192.168.200.100",
+        "port": 9000,
+        "rtsp_sub": "rtsp://admin:PASSport1@192.168.200.100:554//h264Preview_01_sub",
+        "rtsp_main": "rtsp://admin:PASSport1@192.168.200.100:554//h264Preview_01_main"
+    },
+    "frontCam2": {
+        "ip": "192.168.200.101",
+        "port": 9000,
+        "rtsp_sub": "rtsp://admin:@192.168.200.101:554//h264Preview_01_sub",
+        "rtsp_main": "rtsp://admin:@192.168.200.101:554//h264Preview_01_main"
+    }
+}
