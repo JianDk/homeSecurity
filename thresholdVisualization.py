@@ -12,17 +12,17 @@ diff_values = np.array(diff_values)
 files = np.array(data[0]['frontCam1']['files'])
 
 #Use Otzu's method to find the optimal threshold. #Overall histogram
-testImg = cv2.imread(files[1])
-imgHeight = testImg.shape[0]
-imgWidth = testImg.shape[1]
-totalPixel = imgHeight * imgWidth
-maxValue = totalPixel * 255
+#testImg = cv2.imread(files[1])
+#imgHeight = testImg.shape[0]
+#imgWidth = testImg.shape[1]
+#totalPixel = imgHeight * imgWidth
+#maxValue = totalPixel * 255
 
-count, edges = np.histogram(diff_values, bins = 100, range = (0, 200000))
+count, edges = np.histogram(diff_values, bins = 1000, range = (0, 17700001))
 frequency = (count / np.sum(count)) * 100
 edges = edges[:-1]
 plt.plot(edges, frequency)
-plt.draw()
+plt.show()
 
 class otzuThreshold:
     def __init__(self, arr):
@@ -32,9 +32,10 @@ class otzuThreshold:
         self.arr = arr
         
         self.sigmaWeight = np.array([])
-        self.thresholdValue = list()
         self.createP()
-        for i in range(int(self.minArr + np.array(1)), int(self.maxArr)):
+        self.thresholdValues = np.arange(self.minArr +1, self.maxArr, 100000, dtype = int)
+        print(len(self.thresholdValues))
+        for i in self.thresholdValues:
             self.i = i
             #All variables stored in class. 
             self.computeP()
@@ -43,7 +44,7 @@ class otzuThreshold:
             self.computeSigma()
             sigmaw = (self.q1 * self.sigma1) + (self.q2 * self.sigma2)
             self.sigmaWeight = np.append(self.sigmaWeight, sigmaw)
-            self.thresholdValue.append(i)
+            
             print(i)
             
     def computeQ(self):
@@ -83,8 +84,12 @@ class otzuThreshold:
         
 th = otzuThreshold(diff_values)
 cam1 = dict()
-cam1['threshold'] = th.thresholdValue
-cam1['weightedSigma'] = th.sigmaWeight
+cam1['threshold'] = th.thresholdValues.tolist()
+cam1['weightedSigma'] = th.sigmaWeight.tolist()
+
+plt.plot(cam1['threshold'], cam1['weightedSigma'])
+plt.draw()
+plt.show()
 
 #Save the data
 with open('sigmaw_cam1.txt', 'w') as file:
