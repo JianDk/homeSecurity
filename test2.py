@@ -19,10 +19,14 @@ cam2StreamSub = Stream(camName = 'frontCam2',
 
 cam1StreamThread = Thread(target = cam1StreamSub.stream)
 cam2StreamThread = Thread(target = cam2StreamSub.stream)
+cam1StreamReadThread = Thread(target = cam1StreamSub.readStream)
+cam2StreamReadThread = Thread(target = cam2StreamSub.readStream)
 
 cam1StreamThread.start()
 cam2StreamThread.start()
-secToWait = 60 * 60 *24
+cam1StreamReadThread.start()
+cam2StreamReadThread.start()
+secToWait = 60 * 60 * 1
 sleep(secToWait)
 cam1StreamSub.closeStream()
 cam2StreamSub.closeStream()

@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import glob
 import time
+import queue
 
 class Stream:
     def __init__(self, camName, rtsp, rtspSource, sec_betweenFrame):
@@ -12,6 +13,7 @@ class Stream:
         self.timeFormat = '%d-%m-%Y %H_%M_%S_%f'
         self.rtspSource = rtspSource
         self.sec_betweenFrame = sec_betweenFrame
+        self.queue = queue.Queue()
         
         #create output folder if it does not already exist
         self.imgFolder = Path(f'databin/{self.camName}/{rtspSource}/')
@@ -32,9 +34,30 @@ class Stream:
             else:
                 #get file name with time stamp
                 imgPath = str(self.getFileName())
-                cv2.imwrite(imgPath, frame)
+                #Put it in the queue. In this way the stream will not be interupted
+                imgFrame = dict()
+                imgFrame['imgPath'] = imgPath
+                imgFrame['frame'] = frame
+                self.queue.put(imgFrame)
+    
+    def readStream(self):
+        #Get current time
+        now = datetime.datetime.now()
+        nextFrameTime = now + datetime.timedelta(seconds = self.sec_betweenFrame)
             
-            time.sleep(self.sec_betweenFrame)
+        while True:
+            
+            if self.queue.empty() != True:
+                imgFrame = self.queue.get()
+                #check if this frame is above the limit
+                frameTime = datetime.datetime.strptime(imgFrame['imgPath'][0:-4].split('/')[-1],
+                                                       self.timeFormat)
+                if frameTime >= nextFrameTime:
+                    cv2.imwrite(imgFrame['imgPath'], imgFrame['frame'])
+                    #Get current time
+                    now = datetime.datetime.now()
+                    nextFrameTime = now + datetime.timedelta(seconds = self.sec_betweenFrame)
+    
     
     def closeStream(self):
         self.streamOn = False
@@ -117,8 +140,8 @@ class motionDetection:
         img1gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
         img2gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
         #Gaussian filter to remove high frequency variation in image
-        img1gray = cv2.GaussianBlur(img1gray, (11, 11),0)
-        img2gray = cv2.GaussianBlur(img2gray, (11, 11),0)
+        img1gray = cv2.GaussianBlur(img1gray, (31, 31),0)
+        img2gray = cv2.GaussianBlur(img2gray, (31, 31),0)
         #Substract images from each other
         imgdiff = cv2.absdiff(img1gray, img2gray)
         diff_value = cv2.sumElems(imgdiff)
