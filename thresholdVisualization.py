@@ -18,7 +18,7 @@ files = np.array(data[0]['frontCam1']['files'])
 #totalPixel = imgHeight * imgWidth
 #maxValue = totalPixel * 255
 
-count, edges = np.histogram(diff_values, bins = 1000, range = (0, 17700001))
+count, edges = np.histogram(diff_values, bins = 1000, range = (0, 2000000))
 frequency = (count / np.sum(count)) * 100
 edges = edges[:-1]
 plt.plot(edges, frequency)
